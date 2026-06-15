@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Angkringan UPP</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'], serif: ['Playfair Display', 'serif'] },
+                    colors: { brand: { 50: '#fdf8f6', 100: '#f2e8e5', 500: '#d97706', 600: '#b45309', 800: '#92400e', 900: '#78350f' } }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #FAFAF9; }
+        .glass { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255, 255, 255, 0.3); }
+        .menu-card { transition: all 0.2s ease; }
+        .menu-card:active { transform: scale(0.98); background-color: #fdf8f6; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .modal-overlay { transition: opacity 0.3s ease; }
+        .modal-content { transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        .modal-hidden { opacity: 0; pointer-events: none; }
+        .modal-hidden .modal-content { transform: translateY(20px); }
+        .modal-visible { opacity: 1; pointer-events: auto; }
+        .modal-visible .modal-content { transform: translateY(0); }
+        
+        /* Fallback jika gambar tidak muncul */
+        .hero-bg {
+            background: linear-gradient(135deg, #92400e 0%, #78350f 100%);
+        }
+    </style>
+</head>
+<body class="text-stone-800 antialiased pb-24">
+
+    <!-- NAVBAR -->
+    <nav class="glass fixed top-0 w-full z-40 px-4 py-3">
+        <div class="max-w-lg mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-brand-600 rounded-full flex items-center justify-center text-white shadow-lg">
+                    <i class="fas fa-fire-alt"></i>
+                </div>
+                <div>
+                    <h1 class="font-serif text-xl font-bold text-brand-900 leading-tight">Angkringan UPP</h1>
+                    <p class="text-[10px] text-stone-500 font-medium tracking-wide uppercase">Kampus Pasir Pengaraian</p>
+                </div>
+            </div>
+            <button onclick="toggleCart()" class="relative w-10 h-10 bg-stone-100 rounded-full flex items-center justify-center text-brand-800 hover:bg-brand-100 transition">
+                <i class="fas fa-shopping-bag text-lg"></i>
+                <span id="cart-badge" class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full shadow-sm hidden">0</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- HERO SECTION -->
+    <header class="max-w-lg mx-auto mt-20 px-4 mb-6">
+        <div class="relative rounded-3xl overflow-hidden shadow-xl h-56 hero-bg">
+            <!-- Gambar dengan fallback gradient -->
+            <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800&q=80" 
+                 alt="Angkringan" 
+                 class="w-full h-full object-cover"
+                 onerror="this.style.display='none'">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex flex-col justify-end p-5">
+                <h2 class="font-serif text-2xl text-white font-bold mb-1">Hangat, Murah, & Kenyang</h2>
+                <p class="text-stone-200 text-sm">Nikmati Makanan berat or ringan, Cemilan, dan Kopi Joss khas angkringan langsung di lokasi kamu.</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- CATEGORY TABS -->
+    <div class="max-w-lg mx-auto px-4 mb-6 sticky top-[72px] z-30 py-2 bg-[#FAFAF9]/95 backdrop-blur-sm">
+        <div class="flex gap-3 overflow-x-auto hide-scrollbar pb-1">
+            <button onclick="filterMenu('all')" class="cat-btn active px-5 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition shadow-sm bg-brand-800 text-white">Semua</button>
+            <button onclick="filterMenu('makanan')" class="cat-btn px-5 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition bg-white text-stone-600 border border-stone-200">Makanan</button>
+            <button onclick="filterMenu('minuman')" class="cat-btn px-5 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition bg-white text-stone-600 border border-stone-200">Minuman</button>
+            <button onclick="filterMenu('cemilan')" class="cat-btn px-5 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition bg-white text-stone-600 border border-stone-200">Cemilan</button>
+        </div>
+    </div>
+
+    <!-- MENU GRID (TANPA GAMBAR, LEBIH BERSIH) -->
+    <main class="max-w-lg mx-auto px-4">
+        <div id="menu-container" class="grid grid-cols-1 gap-3"></div>
+    </main>
+
+    <!-- CART DRAWER -->
+    <div id="cart-modal" class="modal-hidden modal-overlay fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm">
+        <div class="modal-content bg-white w-full max-w-lg rounded-t-3xl shadow-2xl max-h-[85vh] flex flex-col">
+            <div class="w-full flex justify-center pt-3 pb-1" onclick="toggleCart()"><div class="w-12 h-1.5 bg-stone-300 rounded-full"></div></div>
+            <div class="px-6 py-2 flex justify-between items-center border-b border-stone-100">
+                <h3 class="font-serif text-xl font-bold text-stone-800">Pesanan Anda</h3>
+                <button onclick="toggleCart()" class="text-stone-400 hover:text-red-500 transition"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div id="cart-items" class="flex-1 overflow-y-auto p-6 space-y-4"></div>
+            <div class="p-6 bg-stone-50 border-t border-stone-200 rounded-b-3xl space-y-4">
+                <div class="space-y-3">
+                    <input type="text" id="customer-name" placeholder="Nama Lengkap Anda" class="w-full px-4 py-3 bg-white border border-stone-200 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none text-sm">
+                    <select id="order-type" onchange="toggleDelivery()" class="w-full px-4 py-3 bg-white border border-stone-200 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none text-sm appearance-none">
+                        <option value="pickup">🏪 Ambil Sendiri (Pickup)</option>
+                        <option value="delivery">🛵 Delivery ke Lokasi</option>
+                    </select>
+                    <div id="delivery-div" class="hidden">
+                        <select id="delivery-location" class="w-full px-4 py-3 bg-white border border-stone-200 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none text-sm appearance-none">
+                            <option value="">Pilih Lokasi di UPP...</option>
+                            <option value="Fakultas Ilmu Komputer">Fakultas Ilmu Komputer</option>
+                            <option value="Fakultas Ekonomi">Fakultas Ekonomi</option>
+                            <option value="FKIP">FKIP (Keguruan)</option>
+                            <option value="Gazebo FKIP">Gazebo FKIP</option>
+                            <option value="Fakultas Pertanian">Fakultas Pertanian</option>
+                            <option value="Fakultas Teknik">Fakultas Teknik</option>
+                            <option value="Fakultas Kebidanan">Fakultas Kebidanan</option>
+                            <option value="Fakultas Hukum">Fakultas Hukum</option>
+                            <option value="Gedung Pascasarjana">Pascasarjana</option>
+                            <option value="Asrama Mahasiswa">Asrama Mahasiswa</option>
+                            <option value="Gerbang Utama UPP">Gerbang Utama UPP</option>
+                            <option value="Area Parkir Utama">Area Parkir Utama</option>
+                            <option value="Pohon FILKOM">Pohon FILKOM</option>
+                            <option value="Lapangan Bola">Lapangan Bola</option>
+                            <option value="Lapangan Basket">Lapangan Basket</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex justify-between items-center pt-2">
+                    <span class="text-stone-500 text-sm">Total Pembayaran</span>
+                    <span id="cart-total" class="font-serif text-2xl font-bold text-brand-800">Rp 0</span>
+                </div>
+                <button onclick="showPayment()" id="checkout-btn" disabled class="w-full bg-brand-800 text-white font-semibold py-4 rounded-xl shadow-lg hover:bg-brand-900 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                    <span>Lanjut ke Pembayaran</span><i class="fas fa-arrow-right text-sm"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAYMENT MODAL -->
+    <div id="payment-modal" class="modal-hidden modal-overlay fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+        <div class="modal-content bg-white w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden">
+            <div class="bg-brand-800 p-6 text-center text-white">
+                <h3 class="font-serif text-xl font-bold mb-1">Pembayaran</h3>
+                <p class="text-brand-100 text-sm">Selesaikan pembayaran Anda</p>
+            </div>
+            <div class="p-6 space-y-5">
+                <div class="text-center">
+                    <p class="text-stone-500 text-xs uppercase tracking-wider mb-1">Total Tagihan</p>
+                    <p id="payment-total" class="font-serif text-3xl font-bold text-brand-800">Rp 0</p>
+                    <p id="order-id-display" class="text-xs text-stone-400 mt-1 font-mono"></p>
+                </div>
+                <div class="bg-stone-50 p-4 rounded-2xl border border-stone-200 flex flex-col items-center">
+                    <img id="qr-code-img" src="" alt="QR Code" class="w-40 h-40 rounded-lg shadow-sm mb-3">
+                    <p class="text-xs text-stone-500 text-center">Scan QR ini menggunakan<br><strong>GoPay, OVO, Dana, atau M-Banking</strong></p>
+                </div>
+                <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 space-y-2 text-sm">
+                    <div class="flex items-start gap-3">
+                        <i class="fas fa-university text-blue-600 mt-1"></i>
+                        <div>
+                            <p class="font-semibold text-blue-900">Transfer Bank (BCA)</p>
+                            <p class="text-blue-800 font-mono">123-456-7890</p>
+                            <p class="text-blue-700 text-xs">a.n Warung Angkringan UPP</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="space-y-3 pt-2">
+                    <a id="wa-button" href="#" target="_blank" onclick="finalizeOrder()" class="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-3.5 rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-green-500/20">
+                        <i class="fab fa-whatsapp text-xl"></i> 
+                        <span>Konfirmasi & Buka WhatsApp</span>
+                    </a>
+                    <button onclick="closePayment()" class="w-full bg-stone-100 hover:bg-stone-200 text-stone-600 font-semibold py-3 rounded-xl transition">
+                        Batal
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DATA MENU
+        const menuData = [
+            { id: 1, name: "Ayam Sambal Hijau", price: 7000, category: "makanan", desc: "Ayam goreng gurih dengan sambal ijo khas" },
+            { id: 2, name: "Tahu Udang", price: 7000, category: "makanan", desc: "Tahu crispy isi adonan udang pilihan" },
+            { id: 3, name: "Ayam Sereh", price: 7000, category: "makanan", desc: "Ayam bakar bumbu sereh yang wangi" },
+            { id: 4, name: "Ayam Suwir", price: 7000, category: "makanan", desc: "Ayam suwir bumbu pedas manis" },
+            { id: 5, name: "Ayam Bakar", price: 7000, category: "makanan", desc: "Ayam bakar kecap manis legit" },
+            { id: 6, name: "Tambah Nasi", price: 5000, category: "makanan", desc: "Porsi nasi putih hangat" },
+            { id: 7, name: "Teh Tarik", price: 7000, category: "minuman", desc: "Teh susu khas yang creamy" },
+            { id: 8, name: "Teh Hijau", price: 5000, category: "minuman", desc: "Green tea hangat yang menenangkan" },
+            { id: 9, name: "Teh Poci", price: 5000, category: "minuman", desc: "Teh hitam tradisional wangi melati" },
+            { id: 10, name: "Milo", price: 7000, category: "minuman", desc: "Susu cokelat malt ikonik" },
+            { id: 11, name: "Cappucino", price: 7000, category: "minuman", desc: "Kopi susu creamy dengan foam" },
+            { id: 12, name: "Bakso Tahu Crispy", price: 1000, category: "cemilan", desc: "Per buah. Gurih dan renyah" },
+            { id: 13, name: "Somay", price: 5000, category: "cemilan", desc: "Somay ayam dengan bumbu kacang" }
+        ];
+
+        let cart = [];
+
+        function renderMenu(filter = 'all') {
+            const container = document.getElementById('menu-container');
+            container.innerHTML = '';
+            const filtered = filter === 'all' ? menuData : menuData.filter(item => item.category === filter);
+            
+            filtered.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'menu-card bg-white rounded-2xl p-4 shadow-sm border border-stone-100 flex justify-between items-center';
+                card.innerHTML = `
+                    <div class="flex-1 pr-4">
+                        <h4 class="font-serif font-bold text-stone-800 text-base leading-tight mb-1">${item.name}</h4>
+                        <p class="text-xs text-stone-500 line-clamp-2">${item.desc}</p>
+                    </div>
+                    <div class="flex flex-col items-end gap-2 min-w-[80px]">
+                        <span class="font-bold text-brand-700 text-sm">Rp ${item.price.toLocaleString('id-ID')}</span>
+                        <button onclick="addToCart(${item.id})" class="w-8 h-8 bg-brand-800 text-white rounded-full flex items-center justify-center shadow-md hover:bg-brand-900 transition active:scale-90">
+                            <i class="fas fa-plus text-xs"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                btn.classList.remove('bg-brand-800', 'text-white', 'shadow-md');
+                btn.classList.add('bg-white', 'text-stone-600', 'border', 'border-stone-200');
+            });
+            const activeBtn = Array.from(document.querySelectorAll('.cat-btn')).find(b => b.textContent.toLowerCase().includes(filter === 'all' ? 'semua' : filter));
+            if(activeBtn) {
+                activeBtn.classList.remove('bg-white', 'text-stone-600', 'border', 'border-stone-200');
+                activeBtn.classList.add('bg-brand-800', 'text-white', 'shadow-md');
+            }
+        }
+
+        function filterMenu(category) { renderMenu(category); }
+
+        function addToCart(id) {
+            const item = menuData.find(m => m.id === id);
+            const existing = cart.find(c => c.id === id);
+            if (existing) existing.qty++;
+            else cart.push({ ...item, qty: 1 });
+            updateCartUI();
+            const badge = document.getElementById('cart-badge');
+            badge.classList.add('scale-125');
+            setTimeout(() => badge.classList.remove('scale-125'), 200);
+        }
+
+        function updateQty(id, change) {
+            const item = cart.find(c => c.id === id);
+            if (item) {
+                item.qty += change;
+                if (item.qty <= 0) cart = cart.filter(c => c.id !== id);
+            }
+            updateCartUI();
+        }
+
+        function updateCartUI() {
+            const container = document.getElementById('cart-items');
+            const badge = document.getElementById('cart-badge');
+            const totalEl = document.getElementById('cart-total');
+            const checkoutBtn = document.getElementById('checkout-btn');
+
+            const totalQty = cart.reduce((sum, item) => sum + item.qty, 0);
+            badge.innerText = totalQty;
+            badge.classList.toggle('hidden', totalQty === 0);
+
+            const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            totalEl.innerText = `Rp ${total.toLocaleString('id-ID')}`;
+
+            const name = document.getElementById('customer-name').value.trim();
+            const loc = document.getElementById('delivery-location').value;
+            const type = document.getElementById('order-type').value;
+            const isValid = total > 0 && name !== '' && (type === 'pickup' || (type === 'delivery' && loc !== ''));
+            
+            if (isValid) {
+                checkoutBtn.disabled = false;
+                checkoutBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            } else {
+                checkoutBtn.disabled = true;
+                checkoutBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+
+            if (cart.length === 0) {
+                container.innerHTML = `<div class="flex flex-col items-center justify-center h-40 text-stone-400"><i class="fas fa-shopping-basket text-4xl mb-3 opacity-30"></i><p class="text-sm">Keranjang masih kosong</p></div>`;
+                return;
+            }
+
+            container.innerHTML = cart.map(item => `
+                <div class="flex justify-between items-center bg-stone-50 p-3 rounded-xl border border-stone-100">
+                    <div class="flex-1">
+                        <h5 class="font-semibold text-stone-800 text-sm">${item.name}</h5>
+                        <p class="text-xs text-stone-500">Rp ${item.price.toLocaleString('id-ID')} x ${item.qty}</p>
+                    </div>
+                    <div class="flex items-center gap-3 bg-white rounded-lg border border-stone-200 px-2 py-1 shadow-sm">
+                        <button onclick="updateQty(${item.id}, -1)" class="w-6 h-6 flex items-center justify-center text-stone-600 hover:text-red-500 transition"><i class="fas fa-minus text-xs"></i></button>
+                        <span class="text-sm font-bold w-4 text-center">${item.qty}</span>
+                        <button onclick="updateQty(${item.id}, 1)" class="w-6 h-6 flex items-center justify-center text-stone-600 hover:text-brand-600 transition"><i class="fas fa-plus text-xs"></i></button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function toggleCart() {
+            const modal = document.getElementById('cart-modal');
+            if (modal.classList.contains('modal-hidden')) {
+                modal.classList.remove('modal-hidden');
+                setTimeout(() => modal.classList.add('modal-visible'), 10);
+            } else {
+                modal.classList.remove('modal-visible');
+                setTimeout(() => modal.classList.add('modal-hidden'), 300);
+            }
+        }
+
+        function toggleDelivery() {
+            const type = document.getElementById('order-type').value;
+            const div = document.getElementById('delivery-div');
+            if (type === 'delivery') div.classList.remove('hidden');
+            else { div.classList.add('hidden'); document.getElementById('delivery-location').value = ""; }
+            updateCartUI();
+        }
+
+        document.getElementById('customer-name').addEventListener('input', updateCartUI);
+        document.getElementById('delivery-location').addEventListener('change', updateCartUI);
+
+        function showPayment() {
+            const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            const orderId = "UPP-" + Math.floor(1000 + Math.random() * 9000);
+            document.getElementById('payment-total').innerText = `Rp ${total.toLocaleString('id-ID')}`;
+            document.getElementById('order-id-display').innerText = `ID Pesanan: ${orderId}`;
+            
+            const name = document.getElementById('customer-name').value;
+            const qrData = `ORDER:${orderId}|NAMA:${name}|TOTAL:Rp${total}|ANGKRINGAN UPP`;
+            document.getElementById('qr-code-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrData)}`;
+            
+            const type = document.getElementById('order-type').value;
+            const location = document.getElementById('delivery-location').value;
+            
+            let msg = `*Halo, saya mau pesan Angkringan UPP!*\n\n`;
+            msg += `📝 *ID:* ${orderId}\n👤 *Nama:* ${name}\n`;
+            msg += `🛵 *Metode:* ${type === 'delivery' ? 'Delivery' : 'Pickup'}\n`;
+            if (type === 'delivery') msg += `📍 *Lokasi:* ${location}\n`;
+            msg += `\n*🛒 Pesanan:*\n`;
+            
+            cart.forEach(item => {
+                msg += `• ${item.name} (${item.qty}x) = Rp ${(item.price * item.qty).toLocaleString('id-ID')}\n`;
+            });
+            
+            msg += `\n💰 *TOTAL: Rp ${total.toLocaleString('id-ID')}*`;
+            msg += `\n\n_Saya sudah melakukan pembayaran. Mohon diproses ya!_`;
+
+            const phoneNumber = "6281220120067"; 
+            
+            const waUrl = `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(msg)}`;
+            document.getElementById('wa-button').href = waUrl;
+
+            toggleCart();
+            const modal = document.getElementById('payment-modal');
+            modal.classList.remove('modal-hidden');
+            setTimeout(() => modal.classList.add('modal-visible'), 10);
+        }
+
+        function closePayment() {
+            const modal = document.getElementById('payment-modal');
+            modal.classList.remove('modal-visible');
+            setTimeout(() => modal.classList.add('modal-hidden'), 300);
+        }
+
+        function finalizeOrder() {
+            setTimeout(() => {
+                cart = [];
+                updateCartUI();
+                closePayment();
+                document.getElementById('customer-name').value = '';
+                document.getElementById('order-type').value = 'pickup';
+                toggleDelivery();
+            }, 1000);
+        }
+
+        renderMenu();
+    </script>
+</body>
+</html>
